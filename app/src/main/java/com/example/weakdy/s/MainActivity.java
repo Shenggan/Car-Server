@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
         IP_content = (TextView) findViewById(R.id.IP_content);
-        IP_content.setText("Your IP Address is:"+getIpAddress());
+        IP_content.setText("Your IP Address is:" + getIpAddress());
         TextView wifi_info = (TextView) findViewById(R.id.wifi_info);
         if(get_wifi_info().equals("<unknown ssid>")){
             wifi_info.setText("No WIFI Connection");
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void show_image() {
 
-        Thread thread=new Thread(new Runnable()
+        Thread thread = new Thread(new Runnable()
         {
             @Override
             public void run()
@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void receive_data() {
 
-        Thread thread=new Thread(new Runnable()
+        Thread thread = new Thread(new Runnable()
         {
             @Override
             public void run()
