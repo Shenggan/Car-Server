@@ -1,10 +1,13 @@
 package com.example.weakdy.s;
 
+import android.content.pm.ActivityInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.view.Window;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.os.Handler;
 import android.view.WindowManager;
@@ -16,6 +19,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import com.dd.CircularProgressButton;
+import com.skyfishjy.library.RippleBackground;
+import me.drakeet.materialdialog.MaterialDialog;
+import android.util.TypedValue;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,8 +44,78 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams. FLAG_FULLSCREEN);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_main);
+        /*===UI PART BEGIN=========================*/
+        final MaterialDialog mMaterialDialog = new MaterialDialog(this)
+                .setTitle("注意事项")
+                .setMessage("请确保WIFI处于连接状态!\n请确保所连接的设备在同一局域网下！");
+        mMaterialDialog.setPositiveButton("OK", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mMaterialDialog.dismiss();
+            }
+        }).setNegativeButton("CANCEL", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mMaterialDialog.dismiss();
+            }
+        });
 
+
+        final RippleBackground rippleBackground=(RippleBackground)findViewById(R.id.connect);
+        ImageView imageView=(ImageView)findViewById(R.id.centerImage);
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (get_wifi_info().equals("<unknown ssid>")){
+                    mMaterialDialog.show();
+                    rippleBackground.stopRippleAnimation();
+                }
+                else {
+                    rippleBackground.startRippleAnimation();
+
+                }
+            }
+        });
+
+        if (get_wifi_info().equals("<unknown ssid>")){
+            mMaterialDialog.show();
+            rippleBackground.stopRippleAnimation();
+        }else {
+            rippleBackground.startRippleAnimation();
+        }
+
+        TextView IP = (TextView) findViewById(R.id.IP);
+        final TextView IP_address = (TextView) findViewById(R.id.IP_address);
+        final TextView wifi = (TextView) findViewById(R.id.wifi);
+        IP.setTextSize(TypedValue.COMPLEX_UNIT_SP, 35);
+        IP_address.setTextSize(TypedValue.COMPLEX_UNIT_SP, 35);
+        wifi.setTextSize(TypedValue.COMPLEX_UNIT_SP, 35);
+        refresh(IP_address,wifi);
+
+        final CircularProgressButton circularButton1 = (CircularProgressButton) findViewById(R.id.circularButton1);
+        circularButton1.setIndeterminateProgressMode(true);
+        circularButton1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println(circularButton1.getProgress());
+                circularButton1.setProgress(50);
+                refresh(IP_address,wifi);
+                if (get_wifi_info().equals("<unknown ssid>")){
+                    mMaterialDialog.show();
+                    rippleBackground.stopRippleAnimation();
+                }
+                else {
+                    rippleBackground.startRippleAnimation();
+                }
+                circularButton1.setProgress(100);
+                circularButton1.setProgress(0);
+            }
+        });
+
+        /*===UI PART END=========================*/
+        /*
         IP_content = (TextView) findViewById(R.id.IP_content);
         IP_content.setText("Your IP Address is:" + getIpAddress());
         TextView wifi_info = (TextView) findViewById(R.id.wifi_info);
@@ -46,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
             wifi_info.setText("No WIFI Connection");
         }
         else wifi_info.setText("Wifi:"+get_wifi_info());
-
+        */
         receive_thread = new SocketThread();
         image_thread = new ImageThread();
 
@@ -138,6 +215,15 @@ public class MainActivity extends AppCompatActivity {
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         WifiInfo wi = wifiManager.getConnectionInfo();
         return wi.getSSID();
+    }
+
+
+    public void refresh(TextView IP_address,TextView wifi){
+        IP_address.setText(getIpAddress());
+        if(get_wifi_info().equals("<unknown ssid>")){
+            wifi.setText("No WIFI Connection");
+        }
+        else wifi.setText("WIFI:"+get_wifi_info());
     }
 
     public static String bytes2Hex(byte[] src) {
