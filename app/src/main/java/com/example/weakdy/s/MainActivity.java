@@ -50,11 +50,11 @@ public class MainActivity extends AppCompatActivity {
         receive_thread = new SocketThread();
         image_thread = new ImageThread();
 
-        //receive_thread.start();
-        //image_thread.start();
-        Intent intent = new Intent();
-        intent.setClass(MainActivity.this, CameraActivity.class);
-        startActivity(intent);
+        receive_thread.start();
+        image_thread.start();
+        //Intent intent = new Intent();
+        //intent.setClass(MainActivity.this, CameraActivity.class);
+        //startActivity(intent);
 
     }
 
