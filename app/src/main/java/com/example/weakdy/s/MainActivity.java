@@ -1,17 +1,14 @@
 package com.example.weakdy.s;
 
-import android.content.Intent;
-import android.graphics.ImageFormat;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.View;
 import android.view.Window;
-import android.widget.Button;
 import android.widget.TextView;
+import android.os.Handler;
+import android.view.WindowManager;
+import android.content.Intent;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -19,10 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,13 +25,20 @@ public class MainActivity extends AppCompatActivity {
     public static ByteArrayOutputStream byteArray = null;
     public static boolean connected = false;
     public static ServerSocket mServer;
-    public static TextView IP_content = null;
+    public static TextView IP_content;
+    private SocketThread receive_thread;
+    private ImageThread image_thread;
+    private static Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams. FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
+
         IP_content = (TextView) findViewById(R.id.IP_content);
         IP_content.setText("Your IP Address is:" + getIpAddress());
         TextView wifi_info = (TextView) findViewById(R.id.wifi_info);
@@ -47,85 +47,83 @@ public class MainActivity extends AppCompatActivity {
         }
         else wifi_info.setText("Wifi:"+get_wifi_info());
 
-        receive_data();
+        receive_thread = new SocketThread();
+        image_thread = new ImageThread();
 
-        show_image();
+        //receive_thread.start();
+        //image_thread.start();
+        Intent intent = new Intent();
+        intent.setClass(MainActivity.this, CameraActivity.class);
+        startActivity(intent);
 
     }
 
-    private void show_image() {
+    private class ImageThread extends Thread {
+        @Override
+        public void run() {
+            super.run();
+            while (true) {
+                if (connected == false) {
+                    continue;
+                }
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent intent = new Intent();
+                        intent.setClass(MainActivity.this, CameraActivity.class);
+                        startActivity(intent);
+                    }
+                });
+                break;
+            }
+        }
 
-        Thread thread = new Thread(new Runnable()
+    }
+
+    private class SocketThread extends Thread {
+        @Override
+        public void run()
         {
-            @Override
-            public void run()
-            {
+            try {
+                mServer = new ServerSocket(8888);
+            } catch (Exception e) {}
+            while (!Thread.currentThread().isInterrupted()) {
+                if (connected == true) {
+                    break;
+                }
                 try {
-                    while (!Thread.currentThread().isInterrupted()) {
-                        Thread.sleep(1000);
-                        if (connected == false) {
+                    Thread.sleep(1000);
+
+                    mSocket = mServer.accept();
+                    if (mSocket == null)
+                        continue;
+                    BufferedOutputStream outputStream = new BufferedOutputStream(mSocket.getOutputStream());
+                    final BufferedInputStream inputStream = new BufferedInputStream(mSocket.getInputStream());
+                    byte[] buff = new byte[4];
+                    int len=0;
+                    while ((len=inputStream.read(buff)) != -1) {
+                        String ss = bytes2Hex(buff);
+                        if (!(len>0)){
                             continue;
                         }
-                        IP_content = (TextView) findViewById(R.id.IP_content);
-                        IP_content.setText("Happy");
-
+                        if (ss.equals("34333132")){
+                            connected = true;
+                            String key = "4312";
+                            outputStream.write(key.getBytes());
+                            outputStream.flush();
+                            break;
+                        }
+                        else {
+                            continue;
+                        }
                     }
+                    outputStream.close();
+                    inputStream.close();
                 }
                 catch (InterruptedException e) {}
+                catch (IOException e) {}
             }
-
-        });
-        thread.start();
-    }
-
-
-    private void receive_data() {
-
-        Thread thread = new Thread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                try {
-                    mServer = new ServerSocket(8888);
-                } catch (Exception e) {}
-                while (!Thread.currentThread().isInterrupted()) {
-                    if (connected == true) {
-                        break;
-                    }
-                    try {
-                        Thread.sleep(1000);
-
-                        mSocket = mServer.accept();
-                        if (mSocket == null)
-                            continue;
-                        BufferedOutputStream outputStream = new BufferedOutputStream(mSocket.getOutputStream());
-                        final BufferedInputStream inputStream = new BufferedInputStream(mSocket.getInputStream());
-                        byte[] buff = new byte[4];
-                        int len=0;
-                        while ((len=inputStream.read(buff)) != -1) {
-                            String ss = bytes2Hex(buff);
-                            if (!(len>0)){
-                                continue;
-                            }
-                            if (ss.equals("34333132")){
-                                connected = true;
-                                String key = "4312";
-                                outputStream.write(key.getBytes());
-                                outputStream.flush();
-                                break;
-                            }
-                            else {
-                                continue;
-                            }
-                        }
-                    }
-                    catch (InterruptedException e) {}
-                    catch (IOException e) {}
-                }
-            }
-        });
-        thread.start();
+        }
     }
 
     private String getIpAddress(){
