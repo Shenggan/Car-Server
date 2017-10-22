@@ -25,9 +25,6 @@ public class SocketThread extends Thread {
     public static Socket mSocket = null;
     private Camera2Activity Camera;
 
-    public SocketThread(Camera2Activity camera){
-        Camera = camera;
-    }
     @Override
     public void run()
     {
@@ -56,21 +53,21 @@ public class SocketThread extends Thread {
                         if (!(len>0)){
                             continue;
                         }
-                        if (ss.equals("34333132")){
+                        MainActivity.connected = true;
+                        /*if (ss.equals("4312")){
                             MainActivity.connected = true;
                             String key = "4312";
                             outputStream.write(key.getBytes());
                             outputStream.flush();
                             break;
-                        }
+                        }*/
                     }
-                }else {
-                    /*send image data*/
+                }else if(MainActivity.Camera_Open){
                     JsonObject jsonObj = new JsonObject();
                     jsonObj.addProperty("type", "data");
-                    jsonObj.addProperty("length", Camera.get_length());
-                    jsonObj.addProperty("width", Camera.get_width());
-                    jsonObj.addProperty("height", Camera.get_height());
+                    jsonObj.addProperty("length", Camera2Activity.get_length());
+                    jsonObj.addProperty("width", Camera2Activity.get_width());
+                    jsonObj.addProperty("height", Camera2Activity.get_height());
                     outputStream.write(jsonObj.toString().getBytes());
                     outputStream.flush();
 
@@ -89,11 +86,11 @@ public class SocketThread extends Thread {
                             JsonObject obj = element.getAsJsonObject();
                             element = obj.get("state");
                             if (element != null && element.getAsString().equals("ok")){
-                                /*TO BE DONE*/
+
                                 while (true){
-                                    YuvImage image = new YuvImage(Camera.getImage(), ImageFormat.NV21, Camera.get_width(), Camera.get_height(), null);
+                                    YuvImage image = new YuvImage(Camera2Activity.getImage(), ImageFormat.NV21, Camera2Activity.get_width(), Camera2Activity.get_height(), null);
                                     ByteArrayOutputStream myoutputstream = new ByteArrayOutputStream();
-                                    image.compressToJpeg(new Rect(0, 0, Camera.get_width(), Camera.get_height()), 60, myoutputstream);
+                                    image.compressToJpeg(new Rect(0, 0, Camera2Activity.get_width(), Camera2Activity.get_height()), 60, myoutputstream);
                                     myoutputstream.flush();
                                     myoutputstream.close();
                                     byte tmp[]=myoutputstream.toByteArray();

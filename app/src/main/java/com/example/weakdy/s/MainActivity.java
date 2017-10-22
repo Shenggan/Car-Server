@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageThread image_thread;
     private static Handler handler = new Handler();
     private Camera2Activity camera_activity;
+    public static boolean Camera_Open = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,8 +117,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         /*===UI PART END=========================*/
-        camera_activity = new Camera2Activity();
-        receive_thread = new SocketThread(camera_activity);
+        receive_thread = new SocketThread();
         image_thread = new ImageThread();
 
 
@@ -148,6 +148,8 @@ public class MainActivity extends AppCompatActivity {
                         Intent intent = new Intent();
                         intent.setClass(MainActivity.this, Camera2Activity.class);
                         startActivity(intent);
+
+                        //setContentView(R.layout.activity_camera2);
                     }
                 });
                 break;

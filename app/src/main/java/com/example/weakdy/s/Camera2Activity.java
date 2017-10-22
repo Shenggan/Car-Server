@@ -58,9 +58,9 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
     private ImageReader mImageReader;
     private CameraCaptureSession mCameraCaptureSession;
     private CameraDevice mCameraDevice;
-    private LinkedList<byte[]> mQueue = new LinkedList<byte[]>();
+    public static LinkedList<byte[]> mQueue = new LinkedList<byte[]>();
     private static final int MAX_BUFFER = 15;
-    private byte[] image_data = null;
+    public static byte[] image_data = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,7 +157,7 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
-    public byte[] getImage() {
+    public static byte[] getImage() {
         synchronized (mQueue) {
             if (mQueue.size() > 0) {
                 image_data = mQueue.poll();
