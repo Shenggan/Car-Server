@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         /*===UI PART BEGIN=========================*/
         final MaterialDialog mMaterialDialog = new MaterialDialog(this)
                 .setTitle("注意事项")
-                .setMessage("请确保WIFI处于连接状态!\n请确保所连接的设备在同一局域网下！");
+                .setMessage("请确保WIFI处于连接状态!\n");
         mMaterialDialog.setPositiveButton("OK", new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -124,14 +124,14 @@ public class MainActivity extends AppCompatActivity {
         }
         else wifi_info.setText("Wifi:"+get_wifi_info());
         */
-        receive_thread = new SocketThread();
-        image_thread = new ImageThread();
+        //receive_thread = new SocketThread();
+        //image_thread = new ImageThread();
 
-        receive_thread.start();
-        image_thread.start();
-        //Intent intent = new Intent();
-        //intent.setClass(MainActivity.this, CameraActivity.class);
-        //startActivity(intent);
+        //receive_thread.start();
+        //image_thread.start();
+        Intent intent = new Intent();
+        intent.setClass(MainActivity.this, Camera2Activity.class);
+        startActivity(intent);
 
     }
 
@@ -140,6 +140,11 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             super.run();
             while (true) {
+                try {
+                    Thread.sleep(300);
+                }catch (InterruptedException e){
+
+                }
                 if (connected == false) {
                     continue;
                 }
@@ -147,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Intent intent = new Intent();
-                        intent.setClass(MainActivity.this, CameraActivity.class);
+                        intent.setClass(MainActivity.this, Camera2Activity.class);
                         startActivity(intent);
                     }
                 });
