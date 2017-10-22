@@ -6,6 +6,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -18,6 +20,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Trace;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -26,9 +29,22 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -61,17 +77,24 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
     public static LinkedList<byte[]> mQueue = new LinkedList<byte[]>();
     private static final int MAX_BUFFER = 15;
     public static byte[] image_data = null;
+    private SocketThread mthread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         System.out.println("1==============");
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams. FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         System.out.println("2==============");
         setContentView(R.layout.activity_camera2);
         System.out.println("3==============");
         initVIew();
         System.out.println("4==============");
         MainActivity.Camera_Open = true;
+        mthread = new SocketThread();
+        mthread.start();
     }
 
     /**
@@ -107,6 +130,7 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
         });
     }
 
+
     /**
      * 初始化Camera2
      */
@@ -118,32 +142,34 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
         mainHandler = new Handler(getMainLooper());
         mCameraID = "" + CameraCharacteristics.LENS_FACING_FRONT;//后摄像头
         mImageReader = ImageReader.newInstance(1080, 1920, ImageFormat.JPEG,1);
-        mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() { //可以在这里处理拍照得到的临时照片 例如，写入本地
-            @Override
-            public void onImageAvailable(ImageReader reader) {
-                mCameraDevice.close();
-                mSurfaceView.setVisibility(View.GONE);
-                iv_show.setVisibility(View.VISIBLE);
-                // 拿到拍照照片数据
-                Image image = reader.acquireNextImage();
-                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-                byte[] bytes = new byte[buffer.remaining()];
-                buffer.get(bytes);//由缓冲区存入字节数组
 
-                final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                if (bitmap != null) {
-                    iv_show.setImageBitmap(bitmap);
-                }
-
-                /*Push Image Data*/
-                synchronized (mQueue) {
-                    if (mQueue.size() == MAX_BUFFER) {
-                        mQueue.poll();
-                    }
-                    mQueue.add(bytes);
-                }
-            }
-        }, mainHandler);
+//        mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() { //可以在这里处理拍照得到的临时照片 例如，写入本地
+//            @Override
+//            public void onImageAvailable(ImageReader reader) {
+//                mCameraDevice.close();
+//                mSurfaceView.setVisibility(View.GONE);
+//                iv_show.setVisibility(View.VISIBLE);
+//                // 拿到拍照照片数据
+//                Image image = reader.acquireNextImage();
+//                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+//                byte[] bytes = new byte[buffer.remaining()];
+//                buffer.get(bytes);//由缓冲区存入字节数组
+//
+//                final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+//                if (bitmap != null) {
+//                    iv_show.setImageBitmap(bitmap);
+//                }
+//
+//                /*Push Image Data*/
+//                synchronized (mQueue) {
+//                    if (mQueue.size() == MAX_BUFFER) {
+//                        mQueue.poll();
+//                    }
+//                    mQueue.add(bytes);
+//                }
+//                image.close();
+//            }
+//        }, mainHandler);
         //获取摄像头管理
         mCameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
@@ -160,6 +186,7 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
 
     public static byte[] getImage() {
         synchronized (mQueue) {
+            System.out.println("_________________________________________"+mQueue.size());
             if (mQueue.size() > 0) {
                 image_data = mQueue.poll();
             }
@@ -247,7 +274,7 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
      * 点击事件
      */
     @Override
-    public void onClick(View v) {}
+    public void onClick(View v) { getImage(); }
 
     /**
      * 拍照
@@ -274,5 +301,132 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    public class SocketThread extends Thread {
+        public ServerSocket mServer;
+        public Socket mSocket = null;
+        private Camera2Activity Camera;
+
+        @Override
+        public void run()
+        {
+            try {
+                mServer = new ServerSocket(8888);
+            } catch (Exception e) {}
+            while (!Thread.currentThread().isInterrupted()) {
+            /*if (MainActivity.connected == true) {
+                break;
+            }*/
+                try {
+                    Thread.sleep(1000);
+
+                    mSocket = mServer.accept();
+                    if (mSocket == null)
+                        continue;
+                    BufferedOutputStream outputStream = new BufferedOutputStream(mSocket.getOutputStream());
+                    BufferedInputStream inputStream = new BufferedInputStream(mSocket.getInputStream());
+                    byte[] buff = new byte[256];
+                    int len;
+                    String msg;
+                /*Connecting*/
+                    if (!MainActivity.connected){
+                        while (!Thread.currentThread().isInterrupted()&&(len=inputStream.read(buff)) != -1) {
+                            String ss = bytes2Hex(buff);
+                            if (!(len>0)){
+                                continue;
+                            }
+                            MainActivity.connected = true;
+                            break;
+                        /*if (ss.equals("4312")){
+                            MainActivity.connected = true;
+                            String key = "4312";
+                            outputStream.write(key.getBytes());
+                            outputStream.flush();
+                            break;
+                        }*/
+                        }
+                        outputStream.close();
+                        inputStream.close();
+                    }
+                    outputStream = new BufferedOutputStream(mSocket.getOutputStream());
+                    inputStream = new BufferedInputStream(mSocket.getInputStream());
+                    if(MainActivity.Camera_Open){
+                        JsonObject jsonObj = new JsonObject();
+                        jsonObj.addProperty("type", "data");
+                        jsonObj.addProperty("length", Camera2Activity.get_length());
+                        jsonObj.addProperty("width", Camera2Activity.get_width());
+                        jsonObj.addProperty("height", Camera2Activity.get_height());
+                        outputStream.write(jsonObj.toString().getBytes());
+                        outputStream.flush();
+
+                        while (!Thread.currentThread().isInterrupted()&&((len=inputStream.read(buff)) != -1)){
+                            msg = new String(buff, 0, len);
+                            JsonParser parser = new JsonParser();
+                            boolean isJSON = true;
+                            JsonElement element = null;
+                            try {
+                                element = parser.parse(msg);
+                            } catch (JsonParseException e) {
+                                isJSON = false;
+                            }
+
+                            if (isJSON && element != null){
+                                JsonObject obj = element.getAsJsonObject();
+                                element = obj.get("state");
+                                if (element != null && element.getAsString().equals("ok")){
+
+                                    while (true){
+                                        System.out.println("______________________________________________________________________haha");
+                                        YuvImage image = new YuvImage(getImage(), ImageFormat.NV21, get_width(), get_height(), null);
+                                        ByteArrayOutputStream myoutputstream = new ByteArrayOutputStream();
+                                        image.compressToJpeg(new Rect(0, 0, get_width(), get_height()), 60, myoutputstream);
+                                        myoutputstream.flush();
+                                        myoutputstream.close();
+                                        byte tmp[]=myoutputstream.toByteArray();
+                                        outputStream.write(intToBytes2(tmp.length));
+                                        outputStream.write(tmp);
+                                        System.out.println("cxy: send"+tmp.length+":"+tmp[0]+tmp[500]+tmp[5000]+tmp[tmp.length-5000]);
+                                        outputStream.flush();
+                                        if (Thread.currentThread().isInterrupted()) {
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    outputStream.close();
+                    inputStream.close();
+                }
+                catch (InterruptedException e) {}
+                catch (IOException e) {}
+            }
+        }
+
+        public String bytes2Hex(byte[] src) {
+            if (src == null || src.length <= 0) {
+                return null;
+            }
+
+            char[] res = new char[src.length * 2];
+            final char hexDigits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+            for (int i = 0, j = 0; i < src.length; i++) {
+                res[j++] = hexDigits[src[i] >> 4 & 0x0f];
+                res[j++] = hexDigits[src[i] & 0x0f];
+            }
+
+            return new String(res);
+        }
+        public byte[] intToBytes2(int value)
+        {
+            byte[] src = new byte[4];
+            src[0] = (byte) ((value>>24) & 0xFF);
+            src[1] = (byte) ((value>>16)& 0xFF);
+            src[2] = (byte) ((value>>8)&0xFF);
+            src[3] = (byte) (value & 0xFF);
+            return src;
+        }
+
     }
 }

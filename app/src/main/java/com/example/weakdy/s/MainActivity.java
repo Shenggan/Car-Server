@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     public static boolean connected = false;
     //public static ServerSocket mServer;
     public static TextView IP_content;
-    private SocketThread receive_thread;
+    // private SocketThread receive_thread;
     private ImageThread image_thread;
     private static Handler handler = new Handler();
     private Camera2Activity camera_activity;
@@ -117,12 +117,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         /*===UI PART END=========================*/
-        receive_thread = new SocketThread();
-        image_thread = new ImageThread();
-
-
-        receive_thread.start();
-        image_thread.start();
+//        receive_thread = new SocketThread();
+//        image_thread = new ImageThread();
+//
+//
+//        receive_thread.start();
+//        image_thread.start();
         /*Intent intent = new Intent();
         intent.setClass(MainActivity.this, Camera2Activity.class);
         startActivity(intent);*/
