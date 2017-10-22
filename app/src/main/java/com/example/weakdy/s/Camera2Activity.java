@@ -71,6 +71,7 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
         System.out.println("3==============");
         initVIew();
         System.out.println("4==============");
+        MainActivity.Camera_Open = true;
     }
 
     /**
@@ -240,15 +241,13 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
     }
 
     public static int get_length(){
-        return 1920*1080* ImageFormat.getBitsPerPixel(ImageFormat.JPEG) / 8;
+        return 1920*1080* ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8;
     }
     /**
      * 点击事件
      */
     @Override
-    public void onClick(View v) {
-        takePicture();
-    }
+    public void onClick(View v) {}
 
     /**
      * 拍照

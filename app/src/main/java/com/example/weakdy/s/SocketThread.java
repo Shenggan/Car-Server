@@ -54,6 +54,7 @@ public class SocketThread extends Thread {
                             continue;
                         }
                         MainActivity.connected = true;
+                        break;
                         /*if (ss.equals("4312")){
                             MainActivity.connected = true;
                             String key = "4312";
@@ -62,7 +63,8 @@ public class SocketThread extends Thread {
                             break;
                         }*/
                     }
-                }else if(MainActivity.Camera_Open){
+                }
+                if(MainActivity.Camera_Open){
                     JsonObject jsonObj = new JsonObject();
                     jsonObj.addProperty("type", "data");
                     jsonObj.addProperty("length", Camera2Activity.get_length());
