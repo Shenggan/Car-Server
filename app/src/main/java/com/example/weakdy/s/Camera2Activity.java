@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.LinkedList;
 
 /**
  * Created by Weakdy on 2017/10/20.
@@ -57,8 +58,9 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
     private ImageReader mImageReader;
     private CameraCaptureSession mCameraCaptureSession;
     private CameraDevice mCameraDevice;
-
-
+    public static LinkedList<byte[]> mQueue = new LinkedList<byte[]>();
+    private static final int MAX_BUFFER = 15;
+    public static byte[] image_data = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,9 +128,18 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
                 ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                 byte[] bytes = new byte[buffer.remaining()];
                 buffer.get(bytes);//由缓冲区存入字节数组
+
                 final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                 if (bitmap != null) {
                     iv_show.setImageBitmap(bitmap);
+                }
+
+                /*Push Image Data*/
+                synchronized (mQueue) {
+                    if (mQueue.size() == MAX_BUFFER) {
+                        mQueue.poll();
+                    }
+                    mQueue.add(bytes);
                 }
             }
         }, mainHandler);
@@ -146,6 +157,14 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
+    public static byte[] getImage() {
+        synchronized (mQueue) {
+            if (mQueue.size() > 0) {
+                image_data = mQueue.poll();
+            }
+        }
+        return image_data;
+    }
 
     /**
      * 摄像头创建监听
@@ -212,6 +231,17 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
+    public static int get_width(){
+        return 1920;
+    }
+
+    public static int get_height(){
+        return 1080;
+    }
+
+    public static int get_length(){
+        return 1920*1080* ImageFormat.getBitsPerPixel(ImageFormat.JPEG) / 8;
+    }
     /**
      * 点击事件
      */

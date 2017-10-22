@@ -28,14 +28,16 @@ public class MainActivity extends AppCompatActivity {
 
     public static BufferedInputStream inputStream = null;
     public static BufferedOutputStream outputStream = null;
-    public static Socket mSocket = null;
+    //public static Socket mSocket = null;
     public static ByteArrayOutputStream byteArray = null;
     public static boolean connected = false;
-    public static ServerSocket mServer;
+    //public static ServerSocket mServer;
     public static TextView IP_content;
     private SocketThread receive_thread;
     private ImageThread image_thread;
     private static Handler handler = new Handler();
+    private Camera2Activity camera_activity;
+    public static boolean Camera_Open = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,23 +117,15 @@ public class MainActivity extends AppCompatActivity {
         });
 
         /*===UI PART END=========================*/
-        /*
-        IP_content = (TextView) findViewById(R.id.IP_content);
-        IP_content.setText("Your IP Address is:" + getIpAddress());
-        TextView wifi_info = (TextView) findViewById(R.id.wifi_info);
-        if(get_wifi_info().equals("<unknown ssid>")){
-            wifi_info.setText("No WIFI Connection");
-        }
-        else wifi_info.setText("Wifi:"+get_wifi_info());
-        */
-        //receive_thread = new SocketThread();
-        //image_thread = new ImageThread();
+        receive_thread = new SocketThread();
+        image_thread = new ImageThread();
 
-        //receive_thread.start();
-        //image_thread.start();
-        Intent intent = new Intent();
+
+        receive_thread.start();
+        image_thread.start();
+        /*Intent intent = new Intent();
         intent.setClass(MainActivity.this, Camera2Activity.class);
-        startActivity(intent);
+        startActivity(intent);*/
 
     }
 
@@ -154,6 +148,8 @@ public class MainActivity extends AppCompatActivity {
                         Intent intent = new Intent();
                         intent.setClass(MainActivity.this, Camera2Activity.class);
                         startActivity(intent);
+
+                        //setContentView(R.layout.activity_camera2);
                     }
                 });
                 break;
@@ -162,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private class SocketThread extends Thread {
+    /*private class SocketThread extends Thread {
         @Override
         public void run()
         {
@@ -206,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
                 catch (IOException e) {}
             }
         }
-    }
+    }*/
 
     private String getIpAddress(){
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
@@ -231,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
         else wifi.setText("WIFI:"+get_wifi_info());
     }
 
-    public static String bytes2Hex(byte[] src) {
+    /*public static String bytes2Hex(byte[] src) {
         if (src == null || src.length <= 0) {
             return null;
         }
@@ -244,5 +240,5 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return new String(res);
-    }
+    }*/
 }
