@@ -42,25 +42,6 @@
         app:layout_constraintVertical_bias="0.16"
         app:layout_constraintHorizontal_bias="0.1" />-->
 
-    <com.skyfishjy.library.RippleBackground
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/connect"
-        app:rb_color="#0099CC"
-        app:rb_radius="32dp"
-        app:rb_rippleAmount="4"
-        app:rb_duration="3000"
-        app:rb_scale="6">
-        <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_centerInParent="true"
-            android:id="@+id/centerImage"
-            android:src="@drawable/phone2"/>
-    </com.skyfishjy.library.RippleBackground>
-
     <com.dd.CircularProgressButton
         android:id="@+id/circularButton1"
         android:layout_width="196dp"
@@ -109,6 +90,32 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.15"/>
+
+    <com.skyfishjy.library.RippleBackground
+        android:id="@+id/connect"
+        android:layout_width="78dp"
+        android:layout_height="551dp"
+        app:rb_color="#0099CC"
+        app:rb_duration="3000"
+        app:rb_radius="32dp"
+        app:rb_rippleAmount="4"
+        app:rb_scale="6"
+        tools:layout_editor_absoluteX="153dp"
+        tools:layout_editor_absoluteY="8dp">
+
+        <ImageView
+            android:id="@+id/centerImage"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_centerInParent="true"
+            android:src="@drawable/phone2" />
+    </com.skyfishjy.library.RippleBackground>
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Button" />
 
 
 </android.support.constraint.ConstraintLayout>

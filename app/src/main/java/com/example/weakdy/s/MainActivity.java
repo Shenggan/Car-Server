@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.os.Handler;
@@ -116,6 +117,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Button login = (Button) findViewById(R.id.button);
+        login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this , Camera2Activity.class));
+            }
+        });
         /*===UI PART END=========================*/
 //        receive_thread = new SocketThread();
 //        image_thread = new ImageThread();
