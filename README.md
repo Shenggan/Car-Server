@@ -1,7 +1,5 @@
 # Car-Server
 
-[![Build Status](https://travis-ci.org/Shenggan/Car-Server.svg?branch=master)](https://travis-ci.org/Shenggan/Car-Server)
-
 小车端app，主要负责视频录制和传输。
 
 ### 主要界面
