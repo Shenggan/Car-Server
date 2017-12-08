@@ -16,6 +16,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CameraManager;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,6 +26,7 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.SparseIntArray;
+import android.util.TypedValue;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -32,6 +34,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.JsonElement;
@@ -95,6 +98,26 @@ public class Camera2Activity extends AppCompatActivity implements View.OnClickLi
         MainActivity.Camera_Open = true;
         mthread = new SocketThread();
         mthread.start();
+
+        final TextView IP_address = (TextView) findViewById(R.id.textView2);
+        TextView IP = (TextView) findViewById(R.id.textView);
+
+        IP.setTextSize(TypedValue.COMPLEX_UNIT_SP, 35);
+
+        IP_address.setTextSize(TypedValue.COMPLEX_UNIT_SP, 35);
+
+        refresh(IP_address);
+    }
+    private String getIpAddress(){
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+        String ipAddressFormatted = String.format("%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
+                (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
+        return ipAddressFormatted;
+    }
+
+    public void refresh(TextView IP_address){
+        IP_address.setText(getIpAddress());
     }
 
     /**
